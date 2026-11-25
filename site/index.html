@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Prognozomierz - interaktywny meteogram</title>
+  <meta name="description" content="Prognozomierz — interaktywny meteogram 5 modeli pogodowych z konsensusem, ostrzeżeniami IMGW-PIB i obserwacjami synoptycznymi.">
+  <meta name="theme-color" content="#f4f6f9">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23eef4ff'/%3E%3Ccircle cx='24' cy='24' r='10' fill='%23f59e0b'/%3E%3Cpath d='M18 46a10 10 0 0 1 1-20 13 13 0 0 1 25 4 8 8 0 0 1-2 16z' fill='%232563eb'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://api.open-meteo.com">
+  <link rel="preconnect" href="https://geocoding-api.open-meteo.com">
+  <link rel="preconnect" href="https://danepubliczne.imgw.pl">
+  <script>
+    (function () {
+      try {
+        var s = JSON.parse(localStorage.getItem('pogoda3.settings.v1') || '{}');
+        document.documentElement.dataset.theme = s.theme === 'dark' ? 'dark' : 'light';
+        var sc = Number(s.uiScale);
+        if (sc >= 0.8 && sc <= 1.4) document.documentElement.style.zoom = String(sc);
+      } catch (e) { /* ignore */ }
+      window.__pogodaErrors = [];
+      window.addEventListener('error', function (e) {
+        var msg = String((e && (e.message || e.error)) || 'error');
+        if (e && e.error && e.error.stack) msg += ' | ' + e.error.stack;
+        window.__pogodaErrors.push(msg);
+      });
+      window.addEventListener('unhandledrejection', function (e) {
+        var r = e && e.reason;
+        window.__pogodaErrors.push('unhandledrejection: ' + String((r && (r.stack || r.message)) || r || ''));
+      });
+    }());
+  </script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip-link" href="#meteogram-card">Przejdź do meteogramu</a>
+
+  <header class="topbar">
+    <div class="brand" aria-label="Prognozomierz wersja 3">
+      <span class="brand-mark" aria-hidden="true">⛅</span>
+      <span class="brand-name">Prognozomierz</span>
+      <span class="brand-ver">v3</span>
+    </div>
+
+    <div class="search" role="search">
+      <span class="search-ico" aria-hidden="true">🔍</span>
+      <input id="search-input" type="search" placeholder="Szukaj miasta, np. Dukla" autocomplete="off" spellcheck="false"
+             role="combobox" aria-expanded="false" aria-controls="suggestions" aria-autocomplete="list" aria-label="Szukaj miasta">
+      <button id="search-clear" class="search-clear" type="button" aria-label="Wyczyść wyszukiwanie" hidden>✕</button>
+      <ul id="suggestions" class="suggestions" role="listbox" aria-label="Wyniki wyszukiwania" hidden></ul>
+    </div>
+
+    <button id="geo-btn" class="icon-btn" type="button" title="Użyj mojej lokalizacji" aria-label="Użyj mojej lokalizacji">📍</button>
+    <button id="settings-btn" class="icon-btn settings-btn" type="button" title="Ustawienia" aria-label="Ustawienia" aria-haspopup="dialog">•••</button>
+
+    <a class="support-pill" href="https://buycoffee.to/bienek" target="_blank" rel="noopener noreferrer" title="Wesprzyj autora — postaw wirtualną kawę" aria-label="Wesprzyj autora">☕ <span class="support-label">Wesprzyj<span class="support-word"> autora</span></span></a>
+
+    <div class="ui-scale" role="group" aria-label="Skala kafelków i napisów">
+      <button id="ui-scale-down" class="ui-scale-btn" type="button" title="Pomniejsz kafelki i napisy (Ctrl+-)" aria-label="Pomniejsz interfejs">&minus;</button>
+      <span id="ui-scale-value" class="ui-scale-value" aria-live="polite">100%</span>
+      <button id="ui-scale-up" class="ui-scale-btn" type="button" title="Powiększ kafelki i napisy (Ctrl++)" aria-label="Powiększ interfejs">+</button>
+    </div>
+  </header>
+
+  <nav class="favorites" id="favorites" aria-label="Ulubione lokalizacje"></nav>
+
+  <main class="layout">
+    <div class="card" data-card="controls" data-title="Źródło">
+      <section class="panel controls" id="controls-panel" aria-label="Sterowanie prognozą">
+      <div class="ctrl-row">
+        <span class="ctrl-label">Źródło</span>
+        <div class="seg" id="source-seg" role="group" aria-label="Źródło prognozy">
+          <button type="button" data-source="consensus" class="is-active" aria-pressed="true">Konsensus</button>
+          <button type="button" data-source="compare" aria-pressed="false">Porównanie 5</button>
+        </div>
+        <select id="model-select" aria-label="Model prognozy"></select>
+        <span class="pill agree" id="agree-pill" title="Rozrzut temperatury między modelami">zgodność —</span>
+      </div>
+      <div class="ctrl-row">
+        <span class="ctrl-label">Okno</span>
+        <div class="seg" id="window-seg" role="group" aria-label="Okno czasowe">
+          <button type="button" data-hours="24" aria-pressed="false">24 h</button>
+          <button type="button" data-hours="60" class="is-active" aria-pressed="true">60 h</button>
+          <button type="button" data-hours="72" aria-pressed="false">72 h</button>
+          <button type="button" data-hours="168" aria-pressed="false">168 h</button>
+        </div>
+      </div>
+      <div class="window-slider">
+        <button class="nav-btn" id="win-prev" type="button" aria-label="Przesuń okno wcześniej" title="Przesuń 6 h wcześniej">‹</button>
+        <input type="range" id="win-slider" min="0" max="0" value="0" step="1" aria-label="Przesuwanie okna czasu">
+        <button class="nav-btn" id="win-next" type="button" aria-label="Przesuń okno później" title="Przesuń 6 h później">›</button>
+      </div>
+      <span class="win-range" id="win-range">—</span>
+    </section>
+      <button type="button" class="card-toggle" data-card-toggle aria-expanded="true" aria-controls="controls-panel" aria-label="Zwiń Źródło" title="Zwiń kartę">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="card" data-card="current" data-title="Bieżące warunki">
+      <section class="panel current" id="current-panel" aria-label="Bieżące warunki"></section>
+      <button type="button" class="card-toggle" data-card-toggle aria-expanded="true" aria-controls="current-panel" aria-label="Zwiń Bieżące warunki" title="Zwiń kartę">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <section class="panel warnings" id="warnings-panel" aria-label="Ostrzeżenia IMGW-PIB"></section>
+
+    <div class="card" data-card="days" data-title="Prognoza 7-dniowa">
+      <section class="panel days" id="days-panel" aria-label="Prognoza 7-dniowa"></section>
+      <button type="button" class="card-toggle" data-card-toggle aria-expanded="true" aria-controls="days-panel" aria-label="Zwiń Prognozę 7-dniową" title="Zwiń kartę">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+
+    <div class="card" data-card="meteo" data-title="Meteogram">
+      <section class="panel meteo" id="meteogram-card" aria-label="Meteogram">
+        <header class="meteo-head" id="meteo-head"></header>
+
+        <div class="canvas-wrap" id="canvas-wrap">
+          <canvas id="meteogram" tabindex="0" role="img" aria-label="Meteogram pogodowy"></canvas>
+
+          <div class="chart-overlay chart-loading" id="chart-loading">
+            <span class="spinner" aria-hidden="true"></span>
+            <p id="chart-loading-text">Pobieram prognozę…</p>
+          </div>
+
+          <div class="chart-overlay chart-error" id="chart-error" hidden>
+            <p class="error-title">Nie udało się pobrać prognozy</p>
+            <p id="chart-error-text" class="muted">Sprawdź połączenie z internetem.</p>
+            <button type="button" class="primary-btn" id="retry-btn">Ponów</button>
+          </div>
+        </div>
+
+        <div class="legend" id="legend"></div>
+        <p class="hint">Dotknij wykresu, aby odczytać godzinę. Przeciągnij w poziomie, aby przesunąć zakres; uszczypnij dwoma palcami, aby powiększyć lub zmniejszyć liczbę godzin. Kliknięcie przypina godzinę, <kbd>Esc</kbd> zamyka. Słupki niebieskie to deszcz, jasne — śnieg, fioletowe — deszcz ze śniegiem. Strzałki wiatru pokazują, w którą stronę wieje.</p>
+      </section>
+      <button type="button" class="card-toggle" data-card-toggle aria-expanded="true" aria-controls="meteogram-card" aria-label="Zwiń Meteogram" title="Zwiń kartę">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </main>
+
+  <footer>
+    Źródła: Open-Meteo (ECMWF IFS, ICON, GFS, Météo-France, UKMO) oraz IMGW-PIB (ostrzeżenia i synop). Aplikacja działa w przeglądarce — bez backendu.
+    <a class="footer-link" href="privacy.html">Polityka prywatności</a>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <aside class="readout" id="readout" hidden aria-live="polite" aria-label="Odczyt wybranej godziny"></aside>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <form method="dialog" id="settings-form" class="settings">
+      <header class="settings-head">
+        <div>
+          <span class="eyebrow">Prognozomierz</span>
+          <h2 id="settings-title">Ustawienia</h2>
+        </div>
+        <button class="icon-btn" type="submit" value="close" aria-label="Zamknij ustawienia">✕</button>
+      </header>
+
+      <fieldset>
+        <legend>Motyw</legend>
+        <div class="radio-row">
+          <label class="radio"><input type="radio" name="theme" value="light" checked><span>Jasny</span></label>
+          <label class="radio"><input type="radio" name="theme" value="dark"><span>Ciemny</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Jednostki i odświeżanie</legend>
+        <div class="field-grid">
+          <label class="field"><span>Wiatr</span>
+            <select id="set-wind"><option value="ms">m/s</option><option value="kmh">km/h</option></select>
+          </label>
+          <label class="field"><span>Ciśnienie</span>
+            <select id="set-pressure"><option value="hpa">hPa</option><option value="mmhg">mm Hg</option></select>
+          </label>
+          <label class="field"><span>Auto-odświeżanie</span>
+            <select id="set-refresh">
+              <option value="0">wyłączone</option>
+              <option value="15">co 15 min</option>
+              <option value="30">co 30 min</option>
+              <option value="60">co 60 min</option>
+            </select>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Widoczne pasma</legend>
+        <div class="band-toggles" id="band-toggles"></div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Wsparcie</legend>
+        <p class="settings-note">Prognozomierz jest darmowy i bez reklam. Jeśli chcesz podziękować, możesz postawić autorowi wirtualną kawę.</p>
+        <a class="ghost-btn support-link" href="https://buycoffee.to/bienek" target="_blank" rel="noopener noreferrer">☕ Wesprzyj autora</a>
+      </fieldset>
+
+      <div class="settings-actions">
+        <button type="button" class="ghost-btn" id="settings-reset">Przywróć domyślne</button>
+        <button type="submit" class="primary-btn" value="close">Gotowe</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pl" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Polityka prywatności — Prognozomierz</title>
+  <meta name="description" content="Polityka prywatności Prognozomierza: jakie dane przetwarza aplikacja, geolokalizacja, localStorage i odbiorcy danych.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23eef4ff'/%3E%3Ccircle cx='24' cy='24' r='10' fill='%23f59e0b'/%3E%3Cpath d='M18 46a10 10 0 0 1 1-20 13 13 0 0 1 25 4 8 8 0 0 1-2 16z' fill='%232563eb'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f2f4f8; --panel: #ffffff; --ink: #111827; --muted: #64748b;
+      --line: #dde3ea; --accent: #2563eb; --accent-2: #1d4ed8;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { color-scheme: dark; --bg: #22262b; --panel: #2b3036; --ink: #e7ebf0; --muted: #9aa7b7; --line: #3d444c; --accent: #7aa2ff; --accent-2: #9dbdff; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.65 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 32px 18px 64px; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: clamp(20px, 4vw, 34px); }
+    h1 { font-size: clamp(24px, 4vw, 32px); line-height: 1.2; margin: 0 0 6px; }
+    h2 { font-size: 17px; margin: 28px 0 6px; }
+    p, li { margin: 8px 0; }
+    ul { padding-left: 20px; }
+    .meta { color: var(--muted); font-size: 12.5px; margin-bottom: 20px; }
+    a { color: var(--accent-2); }
+    .back { display: inline-block; margin-bottom: 18px; font-weight: 600; text-decoration: none; }
+    .back:hover { text-decoration: underline; }
+    .note { margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="./">← Wróć do Prognozomierza</a>
+    <article class="card">
+      <h1>Polityka prywatności</h1>
+      <p class="meta">Prognozomierz · wersja z 26 listopada 2026</p>
+
+      <p>Prognozomierz to darmowa aplikacja pogodowa działająca w przeglądarce.
+      Nie tworzy kont, nie zbiera danych do analityki i nie wyświetla reklam.</p>
+
+      <h2>1. Administrator</h2>
+      <p>Administratorem danych jest autor aplikacji Prognozomierz. Kontakt:
+      <a href="https://buycoffee.to/bienek" target="_blank" rel="noopener noreferrer">profil autora w BuyCoffee</a>.</p>
+
+      <h2>2. Jakie dane są przetwarzane</h2>
+      <ul>
+        <li><b>Ustawienia i ulubione</b> — motyw, jednostki, skala, wybrane miasta i cache prognozy
+        są zapisywane wyłącznie w <code>localStorage</code> Twojej przeglądarki. Nie trafiają na serwer autora.</li>
+        <li><b>Lokalizacja</b> — tylko po kliknięciu „Użyj mojej lokalizacji” i wyrażeniu zgody w przeglądarce.
+        Współrzędne są wysyłane do usługi Open-Meteo (prognoza i wyszukiwanie miejscowości), aby pokazać pogodę
+        dla Twojego położenia. Bez zgody aplikacja korzysta z wybranego miasta.</li>
+        <li><b>Dane techniczne</b> — dostawca hostingu może zapisywać standardowe logi (adres IP, typ przeglądarki,
+        czas żądania) w celu dostarczenia strony i bezpieczeństwa.</li>
+      </ul>
+
+      <h2>3. Podstawy prawne</h2>
+      <ul>
+        <li>Zgoda (art. 6 ust. 1 lit. a RODO) — geolokalizacja; możesz ją wycofać, blokując lokalizację dla strony.</li>
+        <li>Prawnie uzasadniony interes (art. 6 ust. 1 lit. f RODO) — działanie i bezpieczeństwo strony,
+        zapamiętanie ustawień w przeglądarce.</li>
+      </ul>
+
+      <h2>4. Odbiorcy danych</h2>
+      <ul>
+        <li><b>Open-Meteo</b> (Szwajcaria) — prognoza pogody i geokodowanie; odbiera współrzędne lub nazwę miasta.</li>
+        <li><b>IMGW-PIB</b> (Polska) — ostrzeżenia meteorologiczne i dane synoptyczne; zapytania nie zawierają danych osobowych.</li>
+        <li><b>Dostawca hostingu</b> — utrzymanie i serwowanie strony.</li>
+      </ul>
+
+      <h2>5. Okres przechowywania</h2>
+      <p>Dane w <code>localStorage</code> pozostają do momentu ich usunięcia przez Ciebie (czyszczenie danych strony
+      w przeglądarce). Logi techniczne przechowuje dostawca hostingu zgodnie z własnymi zasadami.</p>
+
+      <h2>6. Twoje prawa</h2>
+      <p>Masz prawo dostępu do danych, sprostowania, usunięcia, ograniczenia przetwarzania, sprzeciwu oraz
+      wycofania zgody. Możesz też złożyć skargę do Prezesa Urzędu Ochrony Danych Osobowych
+      (ul. Stawki 2, 00-193 Warszawa).</p>
+
+      <h2>7. Brak profilowania i śledzenia</h2>
+      <p>Aplikacja nie używa reklamowych plików cookie, pikseli śledzących ani zewnętrznej analityki.
+      Nie podejmuje zautomatyzowanych decyzji wywierających skutki prawne.</p>
+
+      <h2>8. Zmiany polityki</h2>
+      <p>Przy zmianach funkcji lub dostawców zaktualizuję tę stronę i datę na górze.</p>
+
+      <p class="note">To informacja o przetwarzaniu danych w aplikacji, nie porada prawna.</p>
+    </article>
+  </main>
+</body>
+</html>
